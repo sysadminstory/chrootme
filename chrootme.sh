@@ -10,7 +10,14 @@ get_block_devices()
 	then
 		BLOCKS=`lsblk --output KNAME --list --noheadings | cut -d" " -f 3`
 	else
-		BLOCKS=`cat /proc/partitions | tr -s " " |cut -d" " -f 5`
+		# if tr is not available use awk
+		which tr > /dev/null 2>&1
+		if [ $? -eq 0 ]
+		then
+			BLOCKS=`cat /proc/partitions | tr -s " " |cut -d" " -f 5`
+		else
+			BLOCKS=`cat /proc/partitions | awk 'NR>2 {print $4}`
+		fi
 	fi
 }
 
