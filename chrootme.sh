@@ -30,18 +30,17 @@ get_block_devices()
 # Init the /tmp dir and some vars
 init_tmp_dir_vars()
 {
-	# Création de répertoire temporaire et nettoyage pour stocker la liste des fichiers
+	# Create the temporary directory, and clean it if necessary
 	FINDFOLDER=/tmp/find-fstab
 	mkdir -p $FINDFOLDER
 	rm -rf $FINDFOLDER/*
 	
-	# On définit le chemin du fichier contenant le résultat du choix de partition / fichier
+	# Define the file where the choosen partition / fstab file will be stored
 	DEVCHOICE=$FINDFOLDER/dev-choice
 	
-	# Chemin de montage par défaut
+	# Default mount point used
 	MOUNTFOLDER=/mnt
 
-	FSTABS=""
 }
 
 # Finds all fstab file on all detected block devices
@@ -79,8 +78,6 @@ format_fstab_list()
 	done
 }
 
-#DEBUG: echo "Liste des fichiers fstab trouvés :"
-#DEBUG: cat -n $FINDFOLDER/* | column -t -s :
 
 # Show the menu to choose the fstab file
 show_menu()
@@ -162,7 +159,7 @@ show_dialog()
 	FSTABITEMS=`(cat $FINDFOLDER/* && cat $FINDFOLDER/*) | sort `
 
 	# Showing the menu : whiptail and dialog use the same syntax
-	$MENU --title "Choix du fichier fstab racine" --noitem --clear --backtitle "Chrootme 0.1" --menu "Veuillez choisir la partition et le fichier fstab à utiliser pour monter votre système local :" 20 60 10 $FSTABITEMS 2>$DEVCHOICE
+	$MENU --title "Choice of fstab file of the local system" --noitem --clear --backtitle "Chrootme 0.1" --menu "Please choose the partition and fstab file to use to mount your local system :" 20 60 10 $FSTABITEMS 2>$DEVCHOICE
 	if [ $? -ne 0 ]
 	then 
 		echo "Exiting !"
