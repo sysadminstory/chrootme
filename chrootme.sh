@@ -16,7 +16,7 @@ get_block_devices()
 		then
 			BLOCKS=`cat /proc/partitions | tr -s " " |cut -d" " -f 5`
 		else
-			BLOCKS=`cat /proc/partitions | awk 'NR>2 {print $4}`
+			BLOCKS=`cat /proc/partitions | awk 'NR>2 {print $4}'`
 		fi
 	fi
 }
