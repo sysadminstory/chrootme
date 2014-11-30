@@ -10,7 +10,7 @@ Usage
 
 Requirements
 ============
-To run this tool, you will need to be able to get the file on your system, and you will need thos utilities :
+To run this tool, you will need to be able to get the file on your system, and you will need those utilities :
 - sh
 - cat
 - tr or awk
