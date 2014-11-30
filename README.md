@@ -9,7 +9,7 @@ Usage
     wget --no-check-certificate "https://raw.githubusercontent.com/sysadminstory/chrootme/master/chrootme.sh" -O "chrootme.sh" && sh chrootme.sh
 or
     
-    curl -k -o "chrootme.sh" "https://raw.githubusercontent.com/sysadminstory/chrootme/master/chrootme.sh" && chrootme.sh
+    curl -k -o "chrootme.sh" "https://raw.githubusercontent.com/sysadminstory/chrootme/master/chrootme.sh" && sh chrootme.sh
 
 Requirements
 ============
