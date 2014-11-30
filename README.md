@@ -21,6 +21,7 @@ To run this tool, you will need to be able to get the file on your system, and y
 - sed
 - cp
 - grep
+- sort
 
 There are optional tools used by this script :
 - lsblk
