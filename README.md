@@ -1,7 +1,10 @@
 chrootme
 ========
 
-Small script to mount and chroot a local system (using a recue CD or Image)
+Small script to mount and chroot a local system (using a recue CD or Image).
+This script is developped to have minimal requirements therefore it should run on a very large panel of rescue system.
+
+Feel free to report any problem in the Github located at : https://github.com/sysadminstory/chrootme/
 
 Usage
 =====
