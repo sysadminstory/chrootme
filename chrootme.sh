@@ -55,7 +55,7 @@ find_fstabs()
 		if [ $? -eq 0 ]
 		then
 			# Search for fstab files & unmounting the block device
-			find $MOUNTFOLDER -name fstab -fprint $FINDFOLDER/$DEV
+			find $MOUNTFOLDER -maxdepth 2 -name fstab -fprint $FINDFOLDER/$DEV
 			# Each fstab path is stored in a file named as the block device
 
 			umount $MOUNTFOLDER
