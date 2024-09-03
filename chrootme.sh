@@ -193,16 +193,21 @@ mount_fstab()
 	grep -v "^#" $FINALFSTAB > $SANEFSTAB
 	
 	# Reading each line of the fstab file, try tu mount the device to the corresponding mount points, using the option set in the fstab file
-	cat $SANEFSTAB | while read DEVICE MOUNTOINT TYPE OPTION DUMP PASS
+	cat $SANEFSTAB | while read DEVICE MOUNTPOINT TYPE OPTION DUMP PASS
 	do
-		# Trying to mount the device
-		echo -n "Trying to mount $DEVICE on $MOUNTOINT ..."
-		mount $DEVICE $MOUNTFOLDER/$MOUNTOINT -t $TYPE -o $OPTION > /dev/null 2>&1
-		if [ $? -eq 0 ]
+		if [ "$MOUNTPOINT" != "none" ]
 		then
-			echo " done !"
+			# Trying to mount the device
+			echo -n "Trying to mount $DEVICE on $MOUNTPOINT ..."
+			mount $DEVICE $MOUNTFOLDER/$MOUNTPOINT -t $TYPE -o $OPTION > /dev/null 2>&1
+			if [ $? -eq 0 ]
+			then
+				echo " done !"
+			else
+				echo " failed !"
+			fi
 		else
-			echo " failed !"
+			echo "Ignoring swap device $DEVICE"
 		fi
 	done
 }
