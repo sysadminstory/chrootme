@@ -1,6 +1,35 @@
 #/bin/sh
 
-# Gets all the block devices present 
+
+# Show script usage help
+echo_usage()
+{
+	echo "Usage: $0 [-m] [-s <shell>] [-f <file>]"
+	echo
+	echo "Options:"
+	echo "  -m                : do not start the 'chroot' command, only mount the filesystem mount points"
+	echo "  -s <string>       : When in chroot mode, start the chosen shell instead of $SHELL."
+	echo "  -f <device:path>  : Specify the location (device and path to file) of the fstab file to use."
+	echo "                      The device must be specified without the /dev/ folder"
+	echo "                      The path to the fstab file is given considering that the specified device is the root"
+	echo "                      The device and path are separated by a colon"
+	echo "                      Example : The fstab file is located on the device /dev/sda5 and the path to the fstab file on this device is /etc/fstab :"
+	echo "                      -f sda5:/etc/fstab"
+	echo "  -h, -?            : Show this help message and exit."
+	echo
+	echo "Example :"
+	echo "  This command would start the script in mount only mode :"
+	echo "  $0 -m "
+	echo 
+	echo "Example :"
+	echo "  This command will start the script in chroot mode, will use the fstab file located on /dev/sda5 in the path /etc/fstab and will start /bin/zsh :"
+	echo "  $0 -s /bin/zsh -f sda5:/etc/fstab"
+	exit 1
+}
+
+
+
+# Get all the block devices present 
 get_block_devices()
 {
 	# Check if lsblk is available ; if not, use /proc/partitions
@@ -10,7 +39,7 @@ get_block_devices()
 	then
 		BLOCKS=`lsblk --output KNAME --list --noheadings | cut -d" " -f 3`
 	else
-		# if tr is not available use awk
+		# If tr is not available use awk
 		which tr > /dev/null 2>&1
 		if [ $? -eq 0 ]
 		then
@@ -27,7 +56,7 @@ get_block_devices()
 
 
 
-# Init the /tmp dir and some vars
+# Initialize the /tmp dir and some vars
 init_tmp_dir_vars()
 {
 	# Create the temporary directory, and clean it if necessary
@@ -35,7 +64,7 @@ init_tmp_dir_vars()
 	mkdir -p $FINDFOLDER
 	rm -rf $FINDFOLDER/*
 	
-	# Define the file where the choosen partition / fstab file will be stored
+	# Define the file where the chosen partition / fstab file will be stored
 	DEVCHOICE=$FINDFOLDER/dev-choice
 	
 	# Default mount point used
@@ -43,7 +72,7 @@ init_tmp_dir_vars()
 
 }
 
-# Finds all fstab file on all detected block devices
+# Find all fstab files on all detected block devices
 find_fstabs()
 {
 	
@@ -54,9 +83,9 @@ find_fstabs()
 		mount /dev/$DEV $MOUNTFOLDER > /dev/null 2>&1
 		if [ $? -eq 0 ]
 		then
-			# Search for fstab files & unmounting the block device
+			# Search for fstab files & unmount the block device
 			find $MOUNTFOLDER -maxdepth 2 -name fstab -fprint $FINDFOLDER/$DEV
-			# Each fstab path is stored in a file named as the block device
+			# Each fstab path is stored in a file named after the block device
 
 			umount $MOUNTFOLDER
 			echo " done !"
@@ -70,7 +99,7 @@ find_fstabs()
 # Format the file containing the path to fstab files
 format_fstab_list()
 {
-	# Add before each fstab path the device name followed by colon
+	# Add before each fstab path the device name followed by a colon
 	cd $FINDFOLDER
 	for DEV in *
 	do
@@ -80,7 +109,7 @@ format_fstab_list()
 
 
 # Show the menu to choose the fstab file
-show_menu()
+show_fstab_menu()
 {
 	# Test if whiptail or dialog are available
 	which whiptail > /dev/null 2>&1
@@ -103,7 +132,7 @@ show_menu()
 		return
 	fi
 	
-	# If none of whiptail or dialog are available, show a full textual menu
+	# If neither whiptail or dialog is available, show a full textual menu
 
 	local DEVCHOICE
 	until [ "$INVALID" = 0 ]
@@ -136,14 +165,14 @@ show_menu()
 			read -p "Invalid choice ! Press a key to continue" CRAP
 		fi
 
-		# If the user choose to quit then exit
+		# If the user chooses to quit then exit
 		if [ "$CHOIX" -eq "$MENUID" ]
 		then
 			echo "Exiting !"
 			exit 1
 		fi
 
-		# Storing the device:path according to the user choice
+		# Store the device:path according to the user choice
 		cat $FINDFOLDER/* | sort | sed ${CHOIX}!d > $DEVCHOICE
 		
 	done
@@ -155,10 +184,10 @@ show_menu()
 # Use the dialog or whiptail command to let the user choose the fstab file
 show_dialog()
 {
-	# Establishing the list of menu itemps
+	# Establish the list of menu items
 	FSTABITEMS=`(cat $FINDFOLDER/* && cat $FINDFOLDER/*) | sort `
 
-	# Showing the menu : whiptail and dialog use the same syntax
+	# Show the menu : whiptail and dialog use the same syntax
 	$MENU --title "Choice of fstab file of the local system" --noitem --clear --backtitle "Chrootme 0.1" --menu "Please choose the partition and fstab file to use to mount your local system :" 20 60 10 $FSTABITEMS 2>$DEVCHOICE
 	if [ $? -ne 0 ]
 	then 
@@ -167,15 +196,15 @@ show_dialog()
 	fi
 }
 
-# Mount all block device contained in the selected fstab file
+# Mount all block devices contained in the selected fstab file
 mount_fstab()
 {
-	# Getting the value the user choosed in the menu
+	# Getg the value the user chose in the menu
 	FSTABLOCATION=`cat $DEVCHOICE`
 
 	echo "Trying to use the file $FSTABLOCATION to mount the local system :"
 
-	# Splitting the choice in device and path
+	# Split the choice in device and path
 	DEV=`echo $FSTABLOCATION | cut -d":" -f 1`
 	LOCATION=`echo $FSTABLOCATION | cut -d":" -f 2-`
 
@@ -189,15 +218,15 @@ mount_fstab()
 	cp $MOUNTFOLDER$LOCATION $FINALFSTAB
 	umount $MOUNTFOLDER
 	
-	# Sanitizing thr fstab file by removing comments
+	# Sanitize the fstab file by removing comments
 	grep -v "^#" $FINALFSTAB > $SANEFSTAB
 	
-	# Reading each line of the fstab file, try tu mount the device to the corresponding mount points, using the option set in the fstab file
+	# Read each line of the fstab file, try to mount the device to the corresponding mount points, using the option set in the fstab file
 	cat $SANEFSTAB | while read DEVICE MOUNTPOINT TYPE OPTION DUMP PASS
 	do
 		if [ "$MOUNTPOINT" != "none" ]
 		then
-			# Trying to mount the device
+			# Try to mount the device
 			echo -n "Trying to mount $DEVICE on $MOUNTPOINT ..."
 			mount $DEVICE $MOUNTFOLDER/$MOUNTPOINT -t $TYPE -o $OPTION > /dev/null 2>&1
 			if [ $? -eq 0 ]
@@ -215,7 +244,7 @@ mount_fstab()
 # Start the chroot
 start_chroot()
 {
-	# Mounting the missing /proc & /sys & /dev folders :
+	# Mount the missing /proc & /sys & /dev folders :
 	mount -t proc proc $MOUNTFOLDER/proc
 	mount -t sysfs sys $MOUNTFOLDER/sys
 	mount -o bind /dev $MOUNTFOLDER/dev
@@ -225,14 +254,24 @@ start_chroot()
 	echo " Welcome in your local system chrooted on $MOUNTFOLDER"
 	echo "********************************************************************************"
 	echo ""
-	echo "To leave the chrooted environement, juste type exit or logout !"
+	echo "To leave the chrooted environment, just type exit or logout !"
 	echo "Good luck fixing your local system !"
 	echo ""
 	echo ""
-	
-	chroot $MOUNTFOLDER
+
+	# Start the user-chosen shell instead of the actual shell
+	if [ "$STARTING_SHELL" ]
+	then
+		echo "Starting $STARTING_SHELL"
+		chroot $MOUNTFOLDER $STARTING_SHELL
+	# Start the actual shell
+	else
+		echo "Starting $SHELL"
+		chroot $MOUNTFOLDER
+	fi
 }
 
+# Unmount devices after the chroot session ends
 stop_chroot()
 {
 	echo -n "Trying to unmount local system ..."
@@ -240,11 +279,72 @@ stop_chroot()
 	echo " done !"
 }
 
-get_block_devices
+
+# Start the selected script mode : mount only or chroot
+start_selected_scriptmode()
+{
+	if [ "$MOUNT_ONLY" -eq 1 ]
+	then
+		start_mount_only
+	else
+		start_chroot
+		stop_chroot
+	fi
+}
+
+# Start the mount-only mode
+start_mount_only()
+{
+
+	echo ""
+	echo "********************************************************************************"
+	echo " Your local system was mounted in $MOUNTFOLDER"
+	echo "********************************************************************************"
+	echo ""
+	echo "You can explore and modify your local system in the following folder :"
+	echo "$MOUNTFOLDER"
+	echo ""
+	echo "Good luck fixing your local system !"
+	echo ""
+	echo ""
+}
+
+# 
+fstab_locate_mode()
+{
+	if [ $CMDFSTABLOCATION ]
+	then
+		echo "User-defined fstab location : $ARGFSTABLOCATION"
+		echo $CMDFSTABLOCATION > $DEVCHOICE
+	else
+		
+		get_block_devices
+		find_fstabs
+		format_fstab_list
+		show_fstab_menu
+	fi
+	
+}
+
+# Initialize the temporary directory and variables
 init_tmp_dir_vars
-find_fstabs
-format_fstab_list
-show_menu
+
+# Set default values for the command args variables
+MOUNT_ONLY=0
+STARTING_SHELL=
+CMDFSTABLOCATION=
+
+# Argument handling
+while getopts ms:f:h? OPT
+do
+	case $OPT in
+		m)	MOUNT_ONLY=1;;
+		s)	STARTING_SHELL=$OPTARG;;
+		f)	CMDFSTABLOCATION=$OPTARG;;
+		\?|h)	echo_usage;;
+	esac
+done
+
+fstab_locate_mode
 mount_fstab
-start_chroot
-stop_chroot
+start_selected_scriptmode
